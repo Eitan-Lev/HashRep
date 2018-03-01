@@ -1,3 +1,4 @@
+INFINITY = 10**10
 
 #returns file as lines list
 def readfile(file):
@@ -73,8 +74,6 @@ class RidesList:
     def __init__(self, rides):
         self.ridesMap = initRides(rides)
 
-
-
     def getLeastIdleTimeRide(self, car):
 
         carAvailable = car.getTavilable()
@@ -82,10 +81,34 @@ class RidesList:
 
 
         #Search the ride closest to the position, that minimizes the waiting time.
-        distancesRideTupList = [(manhattenDistance(carPosition, ride.startLoc) + max(ride.tStart - carAvailable,0), ride) for ride in self.ridesMap.values()]
+
+        distancesRideTupList = [(dorEitanValue(car, ride), ride) for ride in self.ridesMap.values()]
         sortedDistance = sorted(distancesRideTupList, key = lambda tup: tup[0])
 
         return self.ridesMap.pop(sortedDistance[0][1].id)
+
+
+
+
+def dorEitanValue(car, ride):
+
+    carAvailable = car.getTavilable()
+    carPosition = car.getPosition()
+
+    gettingThereDistance =  manhattenDistance(carPosition, ride.startLoc)
+
+    #Calc waitingTime:
+
+    gettingThereTime = carAvailable + gettingThereDistance
+    waitingTime =  max(ride.tStart - gettingThereTime,0)
+
+    endingRideTime = gettingThereTime + waitingTime + manhattenDistance(ride.startLoc, ride.endLoc)
+
+    if endingRideTime > ride.tEnd:
+        return INFINITY
+    else:
+        return gettingThereTime + waitingTime
+
 
 
 def createOutputFile(outputFilePath, carsList):
@@ -143,19 +166,29 @@ def createSingleExperiment(inputFile):
 
 
     carIdx = 0
+    prevLen = len(ridesList.ridesMap)
+    justStarted = True
     while ridesList.ridesMap:
+
+        if (carIdx == 0):
+            curLen = len(ridesList.ridesMap)
+            if (not justStarted and curLen == prevLen): #If thee were no changes, stop iterating
+                break
+            justStarted = False
+            prevLen = curLen
 
         curCar = carsList[carIdx]
         curCar.addRide(ridesList.getLeastIdleTimeRide(curCar))
 
         carIdx = (carIdx +1) % carsNum
 
-    outputFile = inputFile.split('.')[0] + '.out'
+    outputFile = inputFile.split('.')[0] + 'out'
     createOutputFile(outputFile, carsList)
 
 def main():
-    INPUT_FILES_LIST = [EXAMPLE_FILE, BONUS_FILE, HURRY_FILE, EASY_FILE]
+    INPUT_FILES_LIST = [EXAMPLE_FILE, BONUS_FILE, HURRY_FILE, EASY_FILE, METROPOLICE_FILE]
     for f in INPUT_FILES_LIST:
+        print('Starting file:', f)
         createSingleExperiment(f)
 
 main()
