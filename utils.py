@@ -106,10 +106,14 @@ def createOutputFile(outputFilePath, carsList):
 
 EXAMPLE_FILE = r'a_example.in'
 METROPOLICE_FILE = r'd_metropolis.in'
-OUTPUT_FILE = r'output.out'
+EASY_FILE = r'b_should_be_easy.in'
+HURRY_FILE = r'c_no_hurry.in'
+BONUS_FILE = r'e_high_bonus.in'
 
-def main():
-    fileLines = readfile(METROPOLICE_FILE)
+# OUTPUT_FILE = r'output.out'
+
+def createSingleExperiment(inputFile):
+    fileLines = readfile(inputFile)
     firstLine = fileLines[0]
     firstLinesSplited = firstLine.split(' ')
     firstLinesSplited = [int(x) for x in firstLinesSplited]
@@ -146,8 +150,12 @@ def main():
 
         carIdx = (carIdx +1) % carsNum
 
+    outputFile = inputFile.split('.')[0] + '.out'
+    createOutputFile(outputFile, carsList)
 
-    createOutputFile(OUTPUT_FILE, carsList)
+def main():
+    INPUT_FILES_LIST = [EXAMPLE_FILE, BONUS_FILE, HURRY_FILE, EASY_FILE]
+    for f in INPUT_FILES_LIST:
+        createSingleExperiment(f)
 
 main()
-
