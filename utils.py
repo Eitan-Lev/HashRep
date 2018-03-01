@@ -53,21 +53,29 @@ def manhattenDistance(startLoc, endLoc):
 
    x1, y1 = startLoc
    x2, y2 = endLoc
-   return abs(x1 - x2) + (y1 - y2)
+   return abs(x1 - x2) + abs(y1 - y2)
 
 
 def isValidRide(ride, car):
 
 
-    position = car.getPosition()
+    carAvailable = car.getTavilable()
+    carPosition = car.getPosition()
 
-    arrivalTime = manhattenDistance(position, ride.startLoc)
-    rideTime = manhattenDistance(ride.startLoc, ride.endLoc)
+    gettingThereDistance =  manhattenDistance(carPosition, ride.startLoc)
 
-    if (car.getTavilable() + arrivalTime + rideTime) > ride.tEnd:
+    #Calc waitingTime:
+
+    gettingThereTime = carAvailable + gettingThereDistance
+    waitingTime =  max(ride.tStart - gettingThereTime,0)
+
+    endingRideTime = gettingThereTime + waitingTime + manhattenDistance(ride.startLoc, ride.endLoc)
+
+    if endingRideTime > ride.tEnd:
         return False
+    else:
+        return True
 
-    return True
 
 class RidesList:
 
@@ -82,13 +90,37 @@ class RidesList:
 
         #Search the ride closest to the position, that minimizes the waiting time.
 
-        distancesRideTupList = [(dorEitanValue(car, ride), ride) for ride in self.ridesMap.values()]
-        sortedDistance = sorted(distancesRideTupList, key = lambda tup: tup[0])
+        distancesRideTupList = [(dorAlonValue(car, ride), ride) for ride in self.ridesMap.values()]
+        selectedValue = min(distancesRideTupList, key = lambda tup: tup[0])
 
-        return self.ridesMap.pop(sortedDistance[0][1].id)
+        return self.ridesMap.pop(selectedValue[1].id)
 
 
+def dorAlonValue(car, ride):
 
+    carAvailable = car.getTavilable()
+    carPosition = car.getPosition()
+
+    gettingThereDistance =  manhattenDistance(carPosition, ride.startLoc)
+
+    #Calc waitingTime:
+
+    gettingThereTime = carAvailable + gettingThereDistance
+    waitingTime =  max(ride.tStart - gettingThereTime,0)
+
+
+    endingRideTime = gettingThereTime + waitingTime + manhattenDistance(ride.startLoc, ride.endLoc)
+    value = gettingThereTime + waitingTime
+
+    #Check if we get bonus
+    if gettingThereTime <= ride.tStart:
+        value -= ride.bonus
+
+
+    if endingRideTime > ride.tEnd:
+        return INFINITY
+    else:
+        return value
 
 def dorEitanValue(car, ride):
 
@@ -178,15 +210,18 @@ def createSingleExperiment(inputFile):
             prevLen = curLen
 
         curCar = carsList[carIdx]
-        curCar.addRide(ridesList.getLeastIdleTimeRide(curCar))
+        selectedRide = ridesList.getLeastIdleTimeRide(curCar)
+        if isValidRide(selectedRide, curCar):
+            curCar.addRide(selectedRide)
 
         carIdx = (carIdx +1) % carsNum
 
-    outputFile = inputFile.split('.')[0] + 'out'
+    outputFile = inputFile.split('.')[0] + '.out'
     createOutputFile(outputFile, carsList)
 
 def main():
-    INPUT_FILES_LIST = [EXAMPLE_FILE, BONUS_FILE, HURRY_FILE, EASY_FILE, METROPOLICE_FILE]
+    # INPUT_FILES_LIST = [EXAMPLE_FILE, BONUS_FILE, HURRY_FILE, EASY_FILE, METROPOLICE_FILE]
+    INPUT_FILES_LIST = [EXAMPLE_FILE]
     for f in INPUT_FILES_LIST:
         print('Starting file:', f)
         createSingleExperiment(f)
